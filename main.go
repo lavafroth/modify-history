@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"os/exec"
 	"strings"
 	"time"
@@ -113,6 +114,8 @@ func (m Model) ChangeDate() {
 	if err != nil {
 		log.Fatalf("failed to parse new date: %v", err)
 	}
+	timedelta := rand.Int63n(int64(time.Hour * 24))
+	parsedDate = parsedDate.Add(time.Duration(timedelta))
 	dateString := parsedDate.String()
 	rebaseRelativeToHead := m.list.Cursor() + 1
 	rebaseHash := m.commits[m.list.Cursor()].Hash.String()
