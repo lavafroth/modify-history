@@ -121,16 +121,25 @@ func (m Model) ChangeDate() {
 	committerEnv := fmt.Sprintf("GIT_COMMITTER_DATE=%v", dateString)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, committerEnv)
+
 	var errb bytes.Buffer
 	cmd.Stderr = &errb
-
 	if err := cmd.Run(); err != nil {
 		log.Fatalf("failed to create amend commit with git: %v: %v", err, errb.String())
 	}
+
 	cmd = exec.Command("git", "rebase", "--continue")
 	if err := cmd.Run(); err != nil {
 		log.Fatalf("failed to continue rebase git: %v", err)
 	}
+
+	for reflog := range m.list.Cursor() + 4 {
+		cmd = exec.Command("git", "reflog", "delete", "HEAD@{0}")
+		if err := cmd.Run(); err != nil {
+			log.Fatalf("failed to delete reflog %d: %v", reflog+1, err)
+		}
+	}
+
 }
 
 func rebase(nthCommit int, rebaseHash string) {

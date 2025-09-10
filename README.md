@@ -12,5 +12,5 @@ go build .
 ```
 
 ### TODOs
-- [ ] Wipe 4 reflog entries corresponding to the interactive rebase
+- [x] Wipe 4 reflog entries corresponding to the interactive rebase
 - [ ] Add jitter to amend timestamp
