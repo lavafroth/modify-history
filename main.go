@@ -147,9 +147,11 @@ func rebase(nthCommit int, rebaseHash string) {
 	if err != nil {
 		log.Fatalf("could not find a path to the running binary: %v", err)
 	}
+	// Avoid the default Windows backslash path separator at all cost
+	myPath = strings.ReplaceAll(myPath, "\\", "/")
 	myEditMode := fmt.Sprintf("%s edit %s", myPath, rebaseHash)
 	cmd := exec.Command("git", "rebase", "-i", fmt.Sprintf("HEAD~%d", nthCommit))
-	seqEditorEnvVar := fmt.Sprintf("GIT_SEQUENCE_EDITOR=%s", myEditMode)
+	seqEditorEnvVar := fmt.Sprintf("GIT_SEQUENCE_EDITOR=%v", myEditMode)
 	cmd.Env = append(cmd.Env, seqEditorEnvVar)
 	var errb bytes.Buffer
 	cmd.Stderr = &errb
