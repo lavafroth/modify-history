@@ -30,11 +30,12 @@ func (i Item) Description() string { return i.desc }
 func (i Item) FilterValue() string { return i.title }
 
 type Model struct {
-	path      string
-	list      list.Model
-	chosen    *int
-	textInput textinput.Model
-	commits   []*object.Commit
+	path         string
+	list         list.Model
+	chosen       *int
+	originalZone *time.Location
+	textInput    textinput.Model
+	commits      []*object.Commit
 }
 
 func (m Model) Init() tea.Cmd {
@@ -87,6 +88,7 @@ func (m Model) ListUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter", " ":
 			m.chosen = new(int)
 			*m.chosen = m.list.Cursor()
+			m.originalZone = m.commits[m.list.Cursor()].Committer.When.Location()
 		}
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
@@ -105,14 +107,20 @@ func (m Model) View() string {
 	return docStyle.Render(m.list.View())
 }
 
+func reconstructTimeInZone(date time.Time, loc *time.Location) time.Time {
+	return time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), date.Second(), date.Nanosecond(), loc)
+}
+
 func (m Model) ChangeDate() {
 	date := m.textInput.Value()
 	parsedDate, err := time.Parse("2006-01-02", date)
 	if err != nil {
 		log.Fatalf("failed to parse new date: %v", err)
 	}
+
 	timedelta := rand.Int63n(int64(time.Hour * 24))
 	parsedDate = parsedDate.Add(time.Duration(timedelta))
+	parsedDate = reconstructTimeInZone(parsedDate, m.originalZone)
 	dateString := parsedDate.String()
 	rebaseRelativeToHead := m.list.Cursor() + 1
 	rebaseHash := m.commits[m.list.Cursor()].Hash.String()
@@ -185,7 +193,8 @@ func (m *Model) FetchGitLog() {
 	}
 	items := []list.Item{}
 	for _, c := range m.commits {
-		item := Item{title: c.Hash.String(), desc: fmt.Sprintf("%s %s %s", c.Author.When, c.Committer.When, c.Message)}
+		oneLineMessage := strings.Split(c.Message, "\n")[0]
+		item := Item{title: oneLineMessage, desc: fmt.Sprintf("%s %s", c.Committer.When, c.Hash.String())}
 		items = append(items, item)
 	}
 	m.list.SetItems(items)
@@ -196,7 +205,7 @@ func renderUI(path string) {
 	if err := os.Chdir(path); err != nil {
 		log.Fatalf("failed to switch to git repo directory: %v", err)
 	}
-	m := Model{path: ".", textInput: newTextField(), chosen: nil, list: list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)}
+	m := Model{path: ".", textInput: newTextField(), chosen: nil, list: list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0), originalZone: nil}
 	m.FetchGitLog()
 	p := tea.NewProgram(m, tea.WithAltScreen())
 

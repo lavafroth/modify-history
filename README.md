@@ -11,6 +11,7 @@ go build .
 ./modify-history open "path/to/your/repo"
 ```
 
-### TODOs
-- [x] Wipe 4 reflog entries corresponding to the interactive rebase
-- [x] Add jitter to amend timestamp
+### Features
+- [x] Wipes reflog entries corresponding to the interactive rebase
+- [x] Adds jitter to amend timestamp
+- [x] Respects the original commit's timezone
