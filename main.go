@@ -151,8 +151,11 @@ func rebase(nthCommit int, rebaseHash string) {
 	cmd := exec.Command("git", "rebase", "-i", fmt.Sprintf("HEAD~%d", nthCommit))
 	seqEditorEnvVar := fmt.Sprintf("GIT_SEQUENCE_EDITOR=%s", myEditMode)
 	cmd.Env = append(cmd.Env, seqEditorEnvVar)
+	var errb bytes.Buffer
+	cmd.Stderr = &errb
+
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("failed to run git rebase command: %v, is git installed?", err)
+		log.Fatalf("failed to run git rebase command: %v, %v is git installed?", err, errb.String())
 	}
 }
 
