@@ -8,12 +8,8 @@ import (
 	"strings"
 	"time"
 
-	// "io"
 	"log"
 	"os"
-
-	// "os/exec"
-	// "strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -21,7 +17,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing/object"
-	// "golang.org/x/term"
 )
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
@@ -72,6 +67,8 @@ func (m Model) TextUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			m.ChangeDate()
 			m.FetchGitLog()
+			m.chosen = nil
+		case tea.KeyEsc:
 			m.chosen = nil
 		}
 	}
