@@ -1,4 +1,4 @@
-module github.com/lavafroth/modify-history
+module github.com/lavafroth/timekeeper
 
 go 1.24.5
 
