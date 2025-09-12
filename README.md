@@ -4,12 +4,13 @@ Warp time with the magic of Git
 
 ## Quickstart
 
-Clone this repo and run the following in the working directory:
+Clone this repo and run the following in the project directory:
 
 ```sh
-go build .
-./timekeeper open "path/to/your/repo"
+go install
 ```
+
+Navigate to your target repo directory and run the `timekeeper` command.
 
 ### Features
 - [x] Wipes reflog entries corresponding to the interactive rebase

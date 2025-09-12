@@ -30,7 +30,6 @@ func (i Item) Description() string { return i.desc }
 func (i Item) FilterValue() string { return i.title }
 
 type Model struct {
-	path         string
 	list         list.Model
 	chosen       *int
 	originalZone *time.Location
@@ -102,7 +101,7 @@ func (m Model) ListUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	if m.chosen != nil {
-		return fmt.Sprintf("Enter the new date in ISO 8601 yyyy-mm-dd format:\n\n%s\n\n(esc to quit)\n", m.textInput.View())
+		return docStyle.Render(fmt.Sprintf("Enter the new date in ISO 8601 yyyy-mm-dd format:\n\n%s\n\n(esc to quit)\n", m.textInput.View()))
 	}
 	return docStyle.Render(m.list.View())
 }
@@ -157,7 +156,7 @@ func rebase(nthCommit int, rebaseHash string) {
 	}
 	// Avoid the default Windows backslash path separator at all cost
 	myPath = strings.ReplaceAll(myPath, "\\", "/")
-	myEditMode := fmt.Sprintf("%s edit %s", myPath, rebaseHash)
+	myEditMode := fmt.Sprintf("%s %s", myPath, rebaseHash)
 	cmd := exec.Command("git", "rebase", "-i", fmt.Sprintf("HEAD~%d", nthCommit))
 	seqEditorEnvVar := fmt.Sprintf("GIT_SEQUENCE_EDITOR=%v", myEditMode)
 	cmd.Env = append(cmd.Env, seqEditorEnvVar)
@@ -170,7 +169,7 @@ func rebase(nthCommit int, rebaseHash string) {
 }
 
 func (m *Model) FetchGitLog() {
-	r, err := git.PlainOpen(m.path)
+	r, err := git.PlainOpen(".")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -201,21 +200,6 @@ func (m *Model) FetchGitLog() {
 	m.list.Title = "Choose a commit"
 }
 
-func renderUI(path string) {
-	if err := os.Chdir(path); err != nil {
-		log.Fatalf("failed to switch to git repo directory: %v", err)
-	}
-	m := Model{path: ".", textInput: newTextField(), chosen: nil, list: list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0), originalZone: nil}
-	m.FetchGitLog()
-	p := tea.NewProgram(m, tea.WithAltScreen())
-
-	if _, err := p.Run(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
-
-}
-
 func editGitTodo(commitHash string, fileName string) {
 	b, err := os.ReadFile(fileName)
 	if err != nil {
@@ -231,11 +215,18 @@ func editGitTodo(commitHash string, fileName string) {
 }
 
 func main() {
-	command := os.Args[1]
-	if command == "open" {
-		renderUI(os.Args[2])
+	if len(os.Args) == 1 {
+		m := Model{textInput: newTextField(), chosen: nil, list: list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0), originalZone: nil}
+		m.FetchGitLog()
+		p := tea.NewProgram(m, tea.WithAltScreen())
+
+		if _, err := p.Run(); err != nil {
+			fmt.Println("Error running program:", err)
+			os.Exit(1)
+		}
 	}
-	if command == "edit" {
-		editGitTodo(os.Args[2], os.Args[3])
+
+	if len(os.Args) == 3 {
+		editGitTodo(os.Args[1], os.Args[2])
 	}
 }
